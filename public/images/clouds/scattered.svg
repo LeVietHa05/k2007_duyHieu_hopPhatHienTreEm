@@ -1,0 +1,36 @@
+<svg width="144" height="144" viewBox="0 0 144 144" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g filter="url(#filter0_i_6_673)">
+    <circle cx="71.4884" cy="62.1031" r="40.3135" fill="url(#paint0_linear_6_673)" />
+  </g>
+  <path d="M15.9644 88.4804C34.7773 83.8742 53.5903 83.8742 72.4033 88.4804C91.2163 93.0867 110.029 93.0867 128.842 88.4804" stroke="url(#paint1_linear_6_673)" stroke-width="26.2548" stroke-linecap="round" />
+  <path d="M15.1572 103.721C33.9702 99.115 52.7832 99.115 71.5962 103.721C90.4092 108.327 109.222 108.327 128.035 103.721" stroke="url(#paint2_linear_6_673)" stroke-width="26.2548" stroke-linecap="round" />
+  <path d="M15.1572 118.234C33.9702 113.628 52.7832 113.628 71.5962 118.234C90.4092 122.841 109.222 122.841 128.035 118.234" stroke="url(#paint3_linear_6_673)" stroke-width="26.2548" stroke-linecap="round" />
+  <defs>
+    <filter id="filter0_i_6_673" x="31.1748" y="21.7895" width="80.6272" height="100.639" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+      <feOffset dy="20.012" />
+      <feGaussianBlur stdDeviation="35.021" />
+      <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+      <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0" />
+      <feBlend mode="overlay" in2="shape" result="effect1_innerShadow_6_673" />
+    </filter>
+    <linearGradient id="paint0_linear_6_673" x1="71.4884" y1="21.7895" x2="71.4884" y2="102.417" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD358" />
+      <stop offset="1" stop-color="#FA6C21" />
+    </linearGradient>
+    <linearGradient id="paint1_linear_6_673" x1="8.84229" y1="84.9475" x2="124.408" y2="91.9351" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2F2F2" />
+      <stop offset="1" stop-color="#CFCFCF" />
+    </linearGradient>
+    <linearGradient id="paint2_linear_6_673" x1="8.03516" y1="100.188" x2="123.601" y2="107.176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2F2F2" />
+      <stop offset="1" stop-color="#CFCFCF" />
+    </linearGradient>
+    <linearGradient id="paint3_linear_6_673" x1="8.03516" y1="114.701" x2="123.601" y2="121.689" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2F2F2" />
+      <stop offset="1" stop-color="#CFCFCF" />
+    </linearGradient>
+  </defs>
+</svg>

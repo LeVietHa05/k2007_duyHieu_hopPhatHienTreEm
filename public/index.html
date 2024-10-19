@@ -1,0 +1,426 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>by Nguyen Duy Hieu</title>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+</head>
+
+<body>
+  <main>
+    <div class="d-flex" id="page-header">
+      <div>
+        <img src="/images/curved-chevron-left.svg" alt="Back" style="">
+      </div>
+      <div class="d-flex" style="flex-direction: column;align-items: center;gap: 12px;">
+        <div>Current position</div>
+        <div style="padding: 13px 26px; border-radius: 10px; background: rgba(252, 252, 253, 0.2);">Yen Hoa, Cau Giay
+        </div>
+      </div>
+      <div>
+        <img src="/images/curved-chevron-right.svg" alt="Forward">
+      </div>
+    </div>
+    <div class="d-flex" id="info">
+      <div style="" id="main-weather-info">
+        <div id="info-text" class="d-flex">
+          <!-- to be handle by js -->
+        </div>
+        <div id="info-visual" class="d-flex justify-between align-center">
+
+        </div>
+      </div>
+      <div id="weather-forecast">
+        <div class="chart-header border-1 w-100">Forecast</div>
+        <div id="forecast-list">
+          <!-- to be handle by js -->
+        </div>
+      </div>
+      <div id="map">
+        <div class="chart-header border-1">map header</div>
+        <div id="map"></div>
+      </div>
+    </div>
+    <div id="current-info">
+      <div>
+        <div class="current-info-header">
+          AQI:
+        </div>
+        <div class="current-info-holder" id="aqi">90</div>
+      </div>
+      <div>
+        <div class="current-info-header">
+          Heart rate:
+        </div>
+        <div class="current-info-holder" id="hRate">90</div>
+      </div>
+      <div>
+        <div class="current-info-header">
+          SPO2:
+        </div>
+        <div class="current-info-holder" id="hSpO2">95</div>
+      </div>
+      <div>
+        <div class="current-info-header">
+          Body temperature:
+        </div>
+        <div class="current-info-holder" id="hTemp">37</div>
+      </div>
+      <div>
+        <div class="current-info-header">
+          Ir check:
+        </div>
+        <div class="current-info-holder" id="ir">1</div>
+      </div>
+    </div>
+    <div id="charts">
+      <div>
+        <div class="chart-header">ECO2 & TVOC</div>
+        <div class="canvas-holder"><canvas id="chart1"></canvas></div>
+      </div>
+      <div>
+        <div class="chart-header">Temperature & Humidity</div>
+        <div class="canvas-holder"><canvas id="tempHumiChart"></canvas></div>
+      </div>
+    </div>
+  </main>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script>
+    const socket = io();
+    socket.on('connect', () => {
+      console.log('Connected');
+    });
+
+    socket.on("/web/measure", (data) => {
+      console.log(data);
+      updateCurrentData(data);
+      charts[0].data.labels.push(getCurTime());
+      addData(charts[0], [data.eco2, data.tvoc]);
+      addData(charts[1], [data.tempC, data.humidity]);
+      if (charts[0].data.labels.length > 10) {
+        charts[0].data.labels.shift();
+        removeData(charts[0]);
+        removeData(charts[1]);
+      }
+    });
+
+    function getCurTime() {
+      let date = new Date();
+      return date.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+
+    function sendDataTest(time) {
+      let i = 0;
+      let id = setInterval(() => {
+        i++;
+        socket.emit('message',
+          {
+            tempC: random(20, 30),
+            humidity: random(40, 60),
+            eco2: random(100, 110),
+            tvoc: random(120, 170),
+            hTemp: random(0, 10),
+            hRate: random(90, 100),
+            hSpO2: random(0, 100),
+            aqi: random(0, 10),
+            ir: random(0, 2),
+          });
+        if (i == time) {
+          clearInterval(id);
+        }
+      }, 1000);
+    }
+    function random(min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+  </script>
+  <!-- code -->
+  <script>
+    // openweather data 21.0186355963452, 105.79840178556466
+    let apiForecast = "https://api.openweathermap.org/data/2.5/forecast?lat=21.018&lon=105.798&appid=9396f69fee320a0014ac3fa7ab35381d"
+    let apiWeather = "https://api.openweathermap.org/data/2.5/weather?lat=21.018&lon=105.798&appid=9396f69fee320a0014ac3fa7ab35381d"
+    fetch(apiWeather)
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+        if (data.cod != 200) return
+        createMap(data);
+        updateWeater(data);
+      })
+    fetch(apiForecast)
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+        if (data.cod != 200) return
+        let data1 = processForecastData(data);
+        updateWeatherForecast(data1)
+      })
+
+    //map
+    function createMap(data) {
+      mapboxgl.accessToken =
+        'pk.eyJ1Ijoib2N0b2JvdDEyMyIsImEiOiJjbDM4azYzZnUwMG4zM2psNzA0bDc3NHphIn0.CufIKD4eMfY8zxV8r-ApFg';
+      const map = new mapboxgl.Map({
+        container: 'map', // container ID
+        center: [data.coord.lon, data.coord.lat], // starting position [lng, lat]. Note that lat must be set between -90 and 90
+        zoom: 12 // starting zoom
+      });
+    }
+    //forecast and current weather info
+    let forecastList = document.getElementById('forecast-list');
+
+    function updateWeater(data) {
+      let infoText = document.getElementById('info-text');
+      infoText.innerHTML =
+        `<div class="d-flex justify-between align-center p-24-0 w-170"
+            style=" border-bottom: 1px solid var(--Gray-200, #e4e7ec);">
+            <div class="color-1 fs-48">${(data.main.temp - 273.15).toFixed(0)}°</div>
+            <div class="fs-18 ">
+              <div>${data.weather[0].main}</div>
+              <div class="fs-16">
+                C:${(data.main.temp_max - 273.15).toFixed(0)}° T:${(data.main.temp_min - 273.15).toFixed(0)}°
+              </div>
+            </div>
+          </div>
+          <div class="fs-18 color-1">Over all weather</div>
+          <div class="fs-16 fw-normal lh-24">
+          ${data.weather[0].description}
+          </div>
+            `
+
+      let infoVisual = document.getElementById('info-visual');
+      let icon = data.weather[0].description.split(' ')[1] + '/' + data.weather[0].description.split(' ')[0]
+      infoVisual.innerHTML = `<div id="info-visual-img" class="d-flex justify-center align-center">
+            <img src="/images/${icon}.svg" alt="">
+          </div>
+          <div id="info-visual-place" class="color-1 fw-normal">
+            ${data.name} - ${customDate(data.dt)} <img src="/images/edit-icon.svg" alt="">
+          </div>
+          <div id="info-visual-detail" class="d-flex justify-between t-center fs-12 lh-18 fw-normal w-100">
+            <div id="info-feellike">
+              <div><img src="/images/sunny-icon.svg" alt=""></div>
+              <div>${(data.main.feels_like - 273.15).toFixed(0)}°</div>
+              <div>Feels like</div>
+            </div>
+            <div id="info-rain-pos">
+              <div><img src="/images/rainy-icon.svg" alt=""></div>
+              <div>${data.main.humidity}%</div>
+              <div>Humidity</div>
+            </div>
+            <div id="info-cloud">
+              <div><img src="/images/cloud-icon.svg" alt=""></div>
+              <div>${data.wind.speed}</div>
+              <div>Wind speed</div>
+            </div>
+          </div>`
+    }
+
+    function customDate(timestamp) {
+      let date = new Date(timestamp * 1000);
+      return date.toLocaleDateString('en-US', {
+        day: "numeric",
+        month: "short",
+      })
+    }
+
+    function processForecastData(data) {
+      let output = []
+      for (let item of data.list) {
+
+        let date = item.dt_txt.split(' ')[0].slice(-5)
+        let time = item.dt_txt.split(' ')[1].slice(0, 5)
+        let dayOfWeek = new Date(date).toLocaleDateString('en-US', {
+          weekday: 'short'
+        })
+        let icon = `${item.weather[0].description.split(' ')[1]}/${item.weather[0].description.split(' ')[0]}`
+        let tempRange = {
+          max: Math.ceil(item.main.temp_max - 273.15),
+          min: Math.floor(item.main.temp_min - 273.15)
+        }
+        output.push({
+          date,
+          time,
+          dayOfWeek,
+          icon,
+          tempRange
+        })
+      }
+      return output
+    }
+
+    function updateWeatherForecast(datas) {
+      let maxTemp = datas.reduce((a, c) => {
+        if (a.tempRange.max > c.tempRange.max) return a
+        else return c
+      }).tempRange.max
+
+      let minTemp = datas.reduce((a, c) => {
+        if (a.tempRange.min < c.tempRange.min) return a
+        else return c
+      }).tempRange.min
+      console.log(maxTemp, minTemp)
+
+      for (let data of datas) {
+        let forecastListItem = document.createElement('div');
+        forecastListItem.classList.add('forecast-list-item');
+
+        let forecastDate = document.createElement('div');
+        forecastDate.classList.add('forecast-date', 'fs-20', 'fw-normal');
+        forecastDate.innerText = data.dayOfWeek + ' ' + data.time;
+        forecastListItem.appendChild(forecastDate);
+
+        let forecastIcon = document.createElement('div');
+        forecastIcon.classList.add('forecast-icon');
+        forecastIcon.innerHTML = `<img src="/images/${data.icon}.svg" alt="">`;
+        forecastListItem.appendChild(forecastIcon);
+
+        let forecastTempRange = document.createElement('div');
+        forecastTempRange.classList.add('forecast-tempRange');
+        let outDiv = document.createElement('div')
+        outDiv.classList.add('out-div')
+        let inDiv = document.createElement('div')
+        inDiv.classList.add('in-div')
+
+        let inW = (data.tempRange.max - data.tempRange.min) / (maxTemp - minTemp) * 100
+        inDiv.style.width = `${inW}% `
+        let inLeft = (data.tempRange.min - minTemp) / (maxTemp - minTemp) * 100
+        inDiv.style.left = `${inLeft}% `
+
+        outDiv.appendChild(inDiv)
+        let div = document.createElement('div')
+        div.classList.add('d-flex', 'align-center')
+        div.style.gap = "8px"
+        let minDiv = document.createElement('div')
+        minDiv.textContent = `${data.tempRange.min}°`
+        div.appendChild(minDiv)
+        div.appendChild(outDiv)
+        let maxDiv = document.createElement('div')
+        maxDiv.textContent = `${data.tempRange.max}°`
+        div.appendChild(maxDiv)
+        forecastTempRange.appendChild(div)
+        forecastListItem.appendChild(forecastTempRange);
+
+        forecastList.appendChild(forecastListItem);
+      }
+    }
+
+    function updateCurrentData(obj) {
+      document.getElementById('aqi').innerText = obj.aqi
+      document.getElementById('hRate').innerText = obj.hRate
+      document.getElementById('hSpO2').innerText = obj.hSpO2
+      document.getElementById('hTemp').innerText = obj.hTemp
+      document.getElementById('ir').innerText = obj.ir ? '1' : '0'
+    }
+    //chart
+    let chartIDs = ['chart1', 'tempHumiChart']
+    let chartLabels = [['eco2', 'tvoc'], ['tempC', 'humidity']]
+    let colors = [['rgb()', 'rgb()'], ['rgb()', 'rgb()']]
+    let chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            display: false,
+          },
+          grid: {
+            display: false,
+          },
+          label: {
+            display: false,
+          }
+        },
+        x: {
+          ticks: {
+            maxRotation: 90,
+            minRotation: 0
+          },
+          grid: {
+            display: false,
+          }
+        }
+      },
+
+      plugins: {
+        legend: {
+          display: false
+        },
+        datalabels: {
+          anchor: 'center',
+          // align: 'top',
+          // offset: "1",
+          color: "#9e77ed",
+          font: {
+            size: 12,
+          },
+        }
+      },
+      tooltips: {
+        enabled: true, // Enable tooltips on hover
+        callbacks: {
+          label: function (tooltipItem, data) {
+            return tooltipItem.yLabel; // Show the y-axis value in the tooltip
+          }
+        }
+      }
+    }
+    let charts = []
+    function genChart() {
+      fetch("/chartdata")
+        .then(res => res.json())
+        .then(data => {
+          console.log(data)
+          updateCurrentData(data[data.length - 1].data)
+          let labels = data.map(item => item.time.slice(0, 5))
+
+          for (let i = 0; i < chartLabels.length; i++) {
+            let ctx = document.getElementById(chartIDs[i]).getContext('2d');
+            let chart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: chartLabels[i].map(label => {
+                  return {
+                    label: label,
+                    data: data.map(item => item.data[label]),
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                  }
+                })
+              },
+              options: chartOptions,
+              plugins: [ChartDataLabels]
+            });
+            charts.push(chart)
+          }
+        })
+    }
+    genChart();
+
+    function addData(chart /*Chart*/, newData/* array*/) {
+      chart.data.datasets.forEach((dataset, i) => {
+        dataset.data.push(newData[i]);
+      });
+      chart.update();
+    }
+    function removeData(chart) {
+      chart.data.datasets.forEach((dataset) => {
+        dataset.data.shift();
+      });
+      chart.update();
+    }
+  </script>
+</body>
+
+</html>
